@@ -61,7 +61,7 @@ public final class MMshop extends JavaPlugin implements Listener, CommandExecuto
             List<String> lore=new ArrayList<>(d.getStringList("lore")); lore.add("");
             lore.add("&8&m--------------------"); lore.add("&aᴘᴜʀᴄʜᴀsᴇ"); if(buy>=0)lore.add("&fPrice: &a"+money(buy));
             lore.add(""); lore.add("&cᴠᴀʟᴜᴇ"); if(sell>=0)lore.add("&fSell: &c"+money(sell));
-            lore.add(""); lore.add("&eLeft-click &7to purchase"); lore.add("&eRight-click &7to sell");
+            lore.add(""); lore.add("&eLeft-click &7Buy 1"); lore.add("&eShift + left-click &7Buy a stack"); lore.add("&eRight-click &7Sell 1"); lore.add("&eShift + right-click &7Sell all");
             inv.setItem(Math.max(0,Math.min(53,d.getInt("slot",10))),tagged(m,d.getString("name","&f"+pretty(key)),lore,"product",id,key));
         }
         p.openInventory(inv); shopViewers.add(p.getUniqueId());
@@ -117,17 +117,17 @@ public final class MMshop extends JavaPlugin implements Listener, CommandExecuto
         String action=meta.getPersistentDataContainer().get(actionKey,PersistentDataType.STRING);if(action==null)return;
         String cat=meta.getPersistentDataContainer().get(categoryKey,PersistentDataType.STRING);
         if(action.equals("category")){sound(p);openCategory(p,cat);return;}
-        String key=meta.getPersistentDataContainer().get(itemKey,PersistentDataType.STRING);if(cat!=null&&key!=null)trade(p,cat,key,e.isRightClick());
+        String key=meta.getPersistentDataContainer().get(itemKey,PersistentDataType.STRING);if(cat!=null&&key!=null)trade(p,cat,key,e.isRightClick(),e.isShiftClick());
     }
     @EventHandler public void drag(InventoryDragEvent e){if(e.getWhoClicked() instanceof Player p&&shopViewers.contains(p.getUniqueId()))e.setCancelled(true);}
     @EventHandler public void close(InventoryCloseEvent e){shopViewers.remove(e.getPlayer().getUniqueId());}
-    private void trade(Player p,String cat,String key,boolean sell){
+    private void trade(Player p,String cat,String key,boolean sell,boolean bulk){
         if(economy==null){p.sendMessage(msg("economy-missing"));return;}
         ConfigurationSection d=getConfig().getConfigurationSection("categories."+cat+".items."+key);if(d==null)return;
         Material m=Material.matchMaterial(d.getString("material","STONE"));if(m==null)return;
         if(sell&&!getConfig().getBoolean("settings.sell-enabled",true)||!sell&&!getConfig().getBoolean("settings.buy-enabled",true)){p.sendMessage(msg("invalid-item"));return;}
         double unit=sell?d.getDouble("sell",-1)*getConfig().getDouble("settings.sell-multiplier",.5):d.getDouble("buy",-1);if(unit<0){p.sendMessage(msg("invalid-item"));return;}
-        int amount=sell?Math.min(m.getMaxStackSize(),count(p,m)):Math.min(m.getMaxStackSize(),Math.max(1,getConfig().getInt("settings.max-buy-amount",64)));
+        int amount=sell?(bulk?count(p,m):Math.min(1,count(p,m))):(bulk?Math.max(1,getConfig().getInt("settings.max-buy-amount",64)):1);
         if(amount<1){p.sendMessage(c("&cYou do not have any "+pretty(key)+" to sell."));return;}
         double total=unit*amount;
         if(sell){if(count(p,m)<amount)return;remove(p,m,amount);economy.depositPlayer(p,total);p.sendMessage(msg("sold").replace("%amount%",String.valueOf(amount)).replace("%item%",pretty(key)).replace("%price%",money(total)));}
