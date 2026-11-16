@@ -57,11 +57,11 @@ public final class MMshop extends JavaPlugin implements Listener, CommandExecuto
         Inventory inv=create(cat.getString("name","&8Shop")); ConfigurationSection items=cat.getConfigurationSection("items");
         if(items!=null)for(String key:items.getKeys(false)){
             ConfigurationSection d=items.getConfigurationSection(key); Material m=Material.matchMaterial(d.getString("material","STONE")); if(m==null)continue;
-            double buy=d.getDouble("buy",-1), sell=d.getDouble("sell",-1)*getConfig().getDouble("settings.sell-multiplier",.5);
+            double buy=d.getDouble("buy",-1);
             List<String> lore=new ArrayList<>(d.getStringList("lore")); lore.add("");
             lore.add("&8&m--------------------"); lore.add("&aᴘᴜʀᴄʜᴀsᴇ"); if(buy>=0)lore.add("&fPrice: &a"+money(buy));
-            lore.add(""); lore.add("&cᴠᴀʟᴜᴇ"); if(sell>=0)lore.add("&fSell: &c"+money(sell));
-            lore.add(""); lore.add("&eLeft-click &7Buy 1"); lore.add("&eShift + left-click &7Buy a stack"); lore.add("&eRight-click &7Sell 1"); lore.add("&eShift + right-click &7Sell all");
+            
+            lore.add(""); lore.add("&eLeft-click &7Buy 1"); lore.add("&eShift-click &7Buy a stack");
             inv.setItem(Math.max(0,Math.min(53,d.getInt("slot",10))),tagged(m,d.getString("name","&f"+pretty(key)),lore,"product",id,key));
         }
         p.openInventory(inv); shopViewers.add(p.getUniqueId());
@@ -74,23 +74,23 @@ public final class MMshop extends JavaPlugin implements Listener, CommandExecuto
             if(a.length==0)openMain(p);else openCategory(p,a[0].toLowerCase(Locale.ROOT));return true;
         }
         if(!s.hasPermission("mmshop.admin")){s.sendMessage(msg("no-permission"));return true;}
-        if(a.length==0){s.sendMessage(c("&b/shopadmin reload | setprice <category> <item> <buy|sell> <amount> | additem <category> <material> <buy> <sell> | removeitem <category> <item>"));return true;}
+        if(a.length==0){s.sendMessage(c("&b/shopadmin reload | setprice <category> <item> <amount> | additem <category> <material> <buy> | removeitem <category> <item>"));return true;}
         switch(a[0].toLowerCase(Locale.ROOT)){
             case "reload"->{reloadConfig();setupEconomy();s.sendMessage(msg("reloaded"));}
             case "setprice"->{
-                if(a.length!=5){s.sendMessage(c("&c/shopadmin setprice <category> <item> <buy|sell> <amount>"));return true;}
-                String path="categories."+a[1]+".items."+a[2]+"."+a[3].toLowerCase();
-                if(!getConfig().contains(path)||!(a[3].equalsIgnoreCase("buy")||a[3].equalsIgnoreCase("sell"))){s.sendMessage(msg("invalid-item"));return true;}
-                try{double v=Double.parseDouble(a[4]);if(v<0||!Double.isFinite(v))throw new NumberFormatException();getConfig().set(path,v);saveConfig();s.sendMessage(c("&aUpdated price to "+money(v)));}
+                if(a.length!=4){s.sendMessage(c("&c/shopadmin setprice <category> <item> <amount>"));return true;}
+                String path="categories."+a[1]+".items."+a[2]+".buy";
+                if(!getConfig().contains(path)){s.sendMessage(msg("invalid-item"));return true;}
+                try{double v=Double.parseDouble(a[3]);if(v<0||!Double.isFinite(v))throw new NumberFormatException();getConfig().set(path,v);saveConfig();s.sendMessage(c("&aUpdated price to "+money(v)));}
                 catch(NumberFormatException ex){s.sendMessage(c("&cEnter a valid non-negative price."));}
             }
             case "additem"->{
-                if(a.length!=5){s.sendMessage(c("&c/shopadmin additem <category> <material> <buy> <sell>"));return true;}
+                if(a.length!=4){s.sendMessage(c("&c/shopadmin additem <category> <material> <buy>"));return true;}
                 if(!getConfig().isConfigurationSection("categories."+a[1])){s.sendMessage(msg("invalid-item"));return true;}
                 Material m=Material.matchMaterial(a[2]);if(m==null||!m.isItem()){s.sendMessage(c("&cInvalid material."));return true;}
-                try{double b=Double.parseDouble(a[3]),v=Double.parseDouble(a[4]);if(b<0||v<0)throw new NumberFormatException();
+                try{double b=Double.parseDouble(a[3]);if(b<0||!Double.isFinite(b))throw new NumberFormatException();
                     String k=m.name().toLowerCase(Locale.ROOT),base="categories."+a[1]+".items."+k;
-                    getConfig().set(base+".material",m.name());getConfig().set(base+".name","&f"+pretty(k));getConfig().set(base+".buy",b);getConfig().set(base+".sell",v);getConfig().set(base+".slot",firstFree(a[1]));getConfig().set(base+".lore",List.of("&7A new item in the market."));saveConfig();s.sendMessage(c("&aAdded "+k+"."));
+                    getConfig().set(base+".material",m.name());getConfig().set(base+".name","&f"+pretty(k));getConfig().set(base+".buy",b);getConfig().set(base+".slot",firstFree(a[1]));getConfig().set(base+".lore",List.of("&7A new item in the market."));saveConfig();s.sendMessage(c("&aAdded "+k+"."));
                 }catch(NumberFormatException ex){s.sendMessage(c("&cPrices must be valid non-negative numbers."));}
             }
             case "removeitem"->{
@@ -107,7 +107,7 @@ public final class MMshop extends JavaPlugin implements Listener, CommandExecuto
         if(a.length==1)return List.of("reload","setprice","additem","removeitem").stream().filter(x->x.startsWith(a[0].toLowerCase())).toList();
         if(a.length==2)return keys("categories",a[1]);
         if(a.length==3&&(a[0].equalsIgnoreCase("setprice")||a[0].equalsIgnoreCase("removeitem")))return keys("categories."+a[1]+".items",a[2]);
-        if(a.length==4&&a[0].equalsIgnoreCase("setprice"))return List.of("buy","sell").stream().filter(x->x.startsWith(a[3].toLowerCase())).toList();
+        
         return List.of();
     }
     @EventHandler public void click(InventoryClickEvent e){
@@ -117,24 +117,25 @@ public final class MMshop extends JavaPlugin implements Listener, CommandExecuto
         String action=meta.getPersistentDataContainer().get(actionKey,PersistentDataType.STRING);if(action==null)return;
         String cat=meta.getPersistentDataContainer().get(categoryKey,PersistentDataType.STRING);
         if(action.equals("category")){sound(p);openCategory(p,cat);return;}
-        String key=meta.getPersistentDataContainer().get(itemKey,PersistentDataType.STRING);if(cat!=null&&key!=null)trade(p,cat,key,e.isRightClick(),e.isShiftClick());
+        String key=meta.getPersistentDataContainer().get(itemKey,PersistentDataType.STRING);if(cat!=null&&key!=null)trade(p,cat,key,e.isShiftClick());
     }
     @EventHandler public void drag(InventoryDragEvent e){if(e.getWhoClicked() instanceof Player p&&shopViewers.contains(p.getUniqueId()))e.setCancelled(true);}
     @EventHandler public void close(InventoryCloseEvent e){shopViewers.remove(e.getPlayer().getUniqueId());}
-    private void trade(Player p,String cat,String key,boolean sell,boolean bulk){
+    private void trade(Player p,String cat,String key,boolean bulk){
         if(economy==null){p.sendMessage(msg("economy-missing"));return;}
         ConfigurationSection d=getConfig().getConfigurationSection("categories."+cat+".items."+key);if(d==null)return;
         Material m=Material.matchMaterial(d.getString("material","STONE"));if(m==null)return;
-        if(sell&&!getConfig().getBoolean("settings.sell-enabled",true)||!sell&&!getConfig().getBoolean("settings.buy-enabled",true)){p.sendMessage(msg("invalid-item"));return;}
-        double unit=sell?d.getDouble("sell",-1)*getConfig().getDouble("settings.sell-multiplier",.5):d.getDouble("buy",-1);if(unit<0){p.sendMessage(msg("invalid-item"));return;}
-        int amount=sell?(bulk?count(p,m):Math.min(1,count(p,m))):(bulk?Math.max(1,getConfig().getInt("settings.max-buy-amount",64)):1);
-        if(amount<1){p.sendMessage(c("&cYou do not have any "+pretty(key)+" to sell."));return;}
+        if(!getConfig().getBoolean("settings.buy-enabled",true)){p.sendMessage(msg("invalid-item"));return;}
+        double unit=d.getDouble("buy",-1);if(unit<0||!Double.isFinite(unit)){p.sendMessage(msg("invalid-item"));return;}
+        int amount=bulk?Math.max(1,getConfig().getInt("settings.max-buy-amount",64)):1;
         double total=unit*amount;
-        if(sell){if(count(p,m)<amount)return;remove(p,m,amount);economy.depositPlayer(p,total);p.sendMessage(msg("sold").replace("%amount%",String.valueOf(amount)).replace("%item%",pretty(key)).replace("%price%",money(total)));}
-        else{if(!economy.has(p,total)){p.sendMessage(msg("not-enough"));return;}if(!space(p,m,amount)){p.sendMessage(msg("inventory-full"));return;}economy.withdrawPlayer(p,total);p.getInventory().addItem(new ItemStack(m,amount));p.sendMessage(msg("purchased").replace("%amount%",String.valueOf(amount)).replace("%item%",pretty(key)).replace("%price%",money(total)));}
+        if(!Double.isFinite(total)||!economy.has(p,total)){p.sendMessage(msg("not-enough"));return;}
+        if(!space(p,m,amount)){p.sendMessage(msg("inventory-full"));return;}
+        var response=economy.withdrawPlayer(p,total);
+        if(!response.transactionSuccess()){p.sendMessage(msg("not-enough"));return;}
+        p.getInventory().addItem(new ItemStack(m,amount));
+        p.sendMessage(msg("purchased").replace("%amount%",String.valueOf(amount)).replace("%item%",pretty(key)).replace("%price%",money(total)));
         sound(p);
     }
-    private int count(Player p,Material m){int n=0;for(ItemStack i:p.getInventory().getStorageContents())if(i!=null&&i.getType()==m)n+=i.getAmount();return n;}
     private boolean space(Player p,Material m,int amount){int n=0;for(ItemStack i:p.getInventory().getStorageContents()){if(i==null)n+=m.getMaxStackSize();else if(i.getType()==m)n+=m.getMaxStackSize()-i.getAmount();}return n>=amount;}
-    private void remove(Player p,Material m,int amount){for(int s=0;s<36&&amount>0;s++){ItemStack i=p.getInventory().getItem(s);if(i==null||i.getType()!=m)continue;int take=Math.min(amount,i.getAmount());i.setAmount(i.getAmount()-take);amount-=take;if(i.getAmount()==0)p.getInventory().setItem(s,null);}}
 }
