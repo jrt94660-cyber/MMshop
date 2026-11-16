@@ -1,0 +1,91 @@
+settings:
+  title: "&8ᴍᴀʀᴋᴇᴛ"
+  currency-symbol: "$"
+  decimal-places: 2
+  sounds: true
+  sell-multiplier: 0.50
+  max-buy-amount: 64
+  buy-enabled: true
+  sell-enabled: true
+messages:
+  prefix: "&8[&bMMshop&8] "
+  no-permission: "&cYou do not have permission."
+  economy-missing: "&cVault economy was not found. Install Vault and an economy provider."
+  purchased: "&aPurchased &f%amount%x %item% &afor &e%price%."
+  sold: "&aSold &f%amount%x %item% &afor &e%price%."
+  not-enough: "&cYou cannot afford that purchase."
+  inventory-full: "&cYou do not have enough inventory space."
+  invalid-item: "&cThat item is not available."
+  reloaded: "&aMMshop configuration reloaded."
+categories:
+  blocks:
+    name: "&bBuilding Blocks"
+    icon: BRICKS
+    slot: 20
+    items:
+      stone:
+        material: STONE
+        name: "&fStone"
+        buy: 8.00
+        sell: 2.00
+        slot: 10
+        lore: ["&7A reliable building material."]
+      cobblestone:
+        material: COBBLESTONE
+        name: "&fCobblestone"
+        buy: 5.00
+        sell: 1.25
+        slot: 11
+        lore: ["&7A basic resource for every base."]
+      oak_log:
+        material: OAK_LOG
+        name: "&6Oak Log"
+        buy: 18.00
+        sell: 4.50
+        slot: 12
+        lore: ["&7Useful for crafting and building."]
+  farming:
+    name: "&aFarming"
+    icon: WHEAT
+    slot: 22
+    items:
+      wheat:
+        material: WHEAT
+        name: "&eWheat"
+        buy: 12.00
+        sell: 3.00
+        slot: 10
+        lore: ["&7Harvested fresh from the fields."]
+      carrot:
+        material: CARROT
+        name: "&6Carrot"
+        buy: 10.00
+        sell: 2.50
+        slot: 11
+        lore: ["&7A useful farming resource."]
+  ores:
+    name: "&dOres & Minerals"
+    icon: DIAMOND
+    slot: 24
+    items:
+      coal:
+        material: COAL
+        name: "&8Coal"
+        buy: 20.00
+        sell: 5.00
+        slot: 10
+        lore: ["&7Fuel for your adventures."]
+      iron_ingot:
+        material: IRON_INGOT
+        name: "&fIron Ingot"
+        buy: 80.00
+        sell: 20.00
+        slot: 11
+        lore: ["&7A versatile crafting metal."]
+      diamond:
+        material: DIAMOND
+        name: "&bDiamond"
+        buy: 500.00
+        sell: 125.00
+        slot: 12
+        lore: ["&7A valuable rare mineral."]
