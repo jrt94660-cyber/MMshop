@@ -1,0 +1,21 @@
+name: MMshop
+version: 1.0.0
+main: com.mmshop.MMshop
+api-version: '1.21'
+softdepend: [Vault]
+authors: [jrt94660-cyber]
+description: Configurable GUI shop with polished item lore and Vault economy.
+commands:
+  shop:
+    description: Open the server shop
+    usage: /shop [category]
+    aliases: [market]
+  shopadmin:
+    description: Manage MMshop
+    usage: /shopadmin <reload|setprice|additem|removeitem>
+    permission: mmshop.admin
+permissions:
+  mmshop.use:
+    default: true
+  mmshop.admin:
+    default: op
